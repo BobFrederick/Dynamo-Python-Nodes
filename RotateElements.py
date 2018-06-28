@@ -16,11 +16,17 @@ from RevitServices.Transactions import TransactionManager
 #get current document
 doc = DocumentManager.Instance.CurrentDBDocument
 
-#elements in project
+#elements in project to rotate
 #get the section views
 sViews = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Viewers).WhereElementIsNotElementType().ToElements()
 #get the elevation views
 eViews = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Elev).WhereElementIsNotElementType().ToElements()
+#get the scope boxes
+sBox = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_VolumeOfInterest).WhereElementIsNotElementType().ToElements()
+#get the matchlines
+matchLines = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Matchline).WhereElementIsNotElementType().ToElements()
+#get the model and detail lines
+lines =  FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Lines).WhereElementIsNotElementType().ToElements()
 #get input angle
 angle = math.radians(IN[0])
 #base point for rotation
@@ -36,16 +42,24 @@ movedViews = []
 #Start Revit Transaction to add to undo list
 TransactionManager.Instance.EnsureInTransaction(doc)
 
-#loop through sections to rotate
+#loop through elements to rotate and add to movedViews array for futher modification in Dynamo
 for s in sViews:
     Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc,s.Id,axis,angle)
     movedViews.append(s)
 for e in eViews:
     Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc,e.Id,axis,angle)
     movedViews.append(e)
+for sB in sBox:
+    Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc, sB.Id, axis, angle)
+    movedViews.append(sB)
+for mL in matchLines:
+    Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc, mL.Id, axis, angle)
+    movedViews.append(mL)
+for l in lines:
+    Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc, l.Id, axis, angle)
+    movedViews.append(l)
 
 #Close Revit Transation
 TransactionManager.Instance.TransactionTaskDone()
 
 OUT = movedViews
-
