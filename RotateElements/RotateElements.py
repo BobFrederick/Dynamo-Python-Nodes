@@ -27,6 +27,8 @@ sBox = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_VolumeOfInte
 matchLines = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Matchline).WhereElementIsNotElementType().ToElements()
 #get the model and detail lines
 lines =  FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Lines).WhereElementIsNotElementType().ToElements()
+#get the reference lines & planes
+planes = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_CLines).WhereElementIsNotElementType().ToElements()
 #get input angle
 angle = math.radians(IN[0])
 #base point for rotation
@@ -58,6 +60,9 @@ for mL in matchLines:
 for l in lines:
     Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc, l.Id, axis, angle)
     movedViews.append(l)
+for pl in planes:
+    Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc, pl.Id, axis, angle)
+    movedViews.append(pl)
 
 #Close Revit Transation
 TransactionManager.Instance.TransactionTaskDone()
