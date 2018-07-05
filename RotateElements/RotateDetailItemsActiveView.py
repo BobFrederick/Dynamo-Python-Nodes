@@ -17,10 +17,11 @@ from RevitServices.Transactions import TransactionManager
 
 #get current document
 doc = DocumentManager.Instance.CurrentDBDocument
-#get current view
-view = Document.ActiveView
-#get elements in view to rotate
-dtlComponent = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_DetailComponents).WhereElementIsNotElementType().ToElements()
+
+#get elements in view to rotate, using overloaded FilteredElementCollector argument ViewID to get only the elements in the active view
+dtlComponent = FilteredElementCollector(doc,doc.ActiveView.Id).OfCategory(BuiltInCategory.OST_DetailComponents).WhereElementIsNotElementType().ToElements()
+dtlGroups = FilteredElementCollector(doc, doc.ActiveView.Id).OfCategory(BuiltInCategory.OST_IOSDetailGroups).WhereElementIsNotElementType().ToElements()
+lines = FilteredElementCollector(doc, doc.ActiveView.Id).OfCategory(BuiltInCategory.OST_Lines).WhereElementIsNotElementType().ToElements()
 #get input angle
 angle = math.radians(IN[0])
 #base point for rotation
@@ -41,7 +42,13 @@ TransactionManager.Instance.EnsureInTransaction(doc)
 for d in dtlComponent:
     Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc,d.Id,axis,angle)
     movedElements.append(d)
-
+for dg in dtlGroups:
+    Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc,dg.Id,axis,angle)
+    movedElements.append(dg)
+for l in lines:
+    Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc,l.Id,axis,angle)
+    movedElements.append(l)
+    
 #Close Revit Transation
 TransactionManager.Instance.TransactionTaskDone()
 

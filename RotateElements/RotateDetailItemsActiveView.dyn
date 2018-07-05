@@ -1,8 +1,11 @@
-<Workspace Version="1.3.2.2480" X="-915.204869968279" Y="-732.092818204739" zoom="1.42703799288043" ScaleFactor="1" Name="Home" Description="" RunType="Manual" RunPeriod="1000" HasRunWithoutCrash="False">
-  <NamespaceResolutionMap />
+<Workspace Version="1.3.2.2480" X="-3014.3537867277" Y="-2595.1157502704" zoom="3.51853405331027" ScaleFactor="1" Name="Home" Description="" RunType="Manual" RunPeriod="1000" HasRunWithoutCrash="False">
+  <NamespaceResolutionMap>
+    <ClassMap partialName="Revit.Application.Document.Current" resolvedName="Revit.Application.Document" assemblyName="RevitNodes.dll" />
+    <ClassMap partialName="Revit.Application.Document" resolvedName="Revit.Application.Document" assemblyName="RevitNodes.dll" />
+  </NamespaceResolutionMap>
   <Elements>
     <Dynamo.Graph.Nodes.ZeroTouch.DSFunction guid="1dcb3028-63b6-4edc-9a89-5dbbc3e00452" type="Dynamo.Graph.Nodes.ZeroTouch.DSFunction" nickname="Project Base Point" x="790.789942687323" y="873.243678655712" isVisible="true" isUpstreamVisible="true" lacing="Shortest" isSelectedInput="False" IsFrozen="false" isPinned="true" assembly="RevitNodes.dll" function="Revit.Elements.Coordinates.BasePoint" />
-    <PythonNodeModels.PythonNode guid="b165472c-9b34-4b32-b814-90caf69cb4e5" type="PythonNodeModels.PythonNode" nickname="Rotate Elements" x="982.976151883491" y="807.570383276629" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="False" IsFrozen="false" isPinned="false" inputcount="2">
+    <PythonNodeModels.PythonNode guid="b165472c-9b34-4b32-b814-90caf69cb4e5" type="PythonNodeModels.PythonNode" nickname="Rotate Elements" x="983.676904074385" y="804.563825290552" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="False" IsFrozen="false" isPinned="false" inputcount="2">
       <PortInfo index="0" default="False" />
       <PortInfo index="1" default="False" />
       <Script>#Rotates visible detail items in view
@@ -24,10 +27,11 @@ from RevitServices.Transactions import TransactionManager
 
 #get current document
 doc = DocumentManager.Instance.CurrentDBDocument
-#get current view
-view = Document.ActiveView
-#get elements in view to rotate
-dtlComponent = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_DetailComponents).WhereElementIsNotElementType().ToElements()
+
+#get elements in view to rotate, using overloaded FilteredElementCollector argument ViewID to get only the elements in the active view
+dtlComponent = FilteredElementCollector(doc,doc.ActiveView.Id).OfCategory(BuiltInCategory.OST_DetailComponents).WhereElementIsNotElementType().ToElements()
+dtlGroups = FilteredElementCollector(doc, doc.ActiveView.Id).OfCategory(BuiltInCategory.OST_IOSDetailGroups).WhereElementIsNotElementType().ToElements()
+lines = FilteredElementCollector(doc, doc.ActiveView.Id).OfCategory(BuiltInCategory.OST_Lines).WhereElementIsNotElementType().ToElements()
 #get input angle
 angle = math.radians(IN[0])
 #base point for rotation
@@ -48,14 +52,20 @@ TransactionManager.Instance.EnsureInTransaction(doc)
 for d in dtlComponent:
     Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc,d.Id,axis,angle)
     movedElements.append(d)
-
+for dg in dtlGroups:
+    Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc,dg.Id,axis,angle)
+    movedElements.append(dg)
+for l in lines:
+    Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc,l.Id,axis,angle)
+    movedElements.append(l)
+    
 #Close Revit Transation
 TransactionManager.Instance.TransactionTaskDone()
 
 OUT = movedElements
 </Script>
     </PythonNodeModels.PythonNode>
-    <CoreNodeModels.Watch guid="f782dc92-5869-47c3-969a-f7be09396eae" type="CoreNodeModels.Watch" nickname="Watch" x="1137.37864833964" y="795.491944283952" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="False" IsFrozen="false" isPinned="false">
+    <CoreNodeModels.Watch guid="f782dc92-5869-47c3-969a-f7be09396eae" type="CoreNodeModels.Watch" nickname="Watch" x="1192.14153597525" y="612.180383566865" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="False" IsFrozen="false" isPinned="false">
       <PortInfo index="0" default="False" />
     </CoreNodeModels.Watch>
     <Dynamo.Graph.Nodes.CodeBlockNodeModel guid="2ea569c3-ec49-4604-8306-79864827a09a" type="Dynamo.Graph.Nodes.CodeBlockNodeModel" nickname="Angle of Rotation" x="787.775835026487" y="786.993935040396" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="False" IsFrozen="false" isPinned="false" CodeText="1.3;" ShouldFocus="false" />
