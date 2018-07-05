@@ -1,0 +1,74 @@
+<Workspace Version="1.3.2.2480" X="-915.204869968279" Y="-732.092818204739" zoom="1.42703799288043" ScaleFactor="1" Name="Home" Description="" RunType="Manual" RunPeriod="1000" HasRunWithoutCrash="False">
+  <NamespaceResolutionMap />
+  <Elements>
+    <Dynamo.Graph.Nodes.ZeroTouch.DSFunction guid="1dcb3028-63b6-4edc-9a89-5dbbc3e00452" type="Dynamo.Graph.Nodes.ZeroTouch.DSFunction" nickname="Project Base Point" x="790.789942687323" y="873.243678655712" isVisible="true" isUpstreamVisible="true" lacing="Shortest" isSelectedInput="False" IsFrozen="false" isPinned="true" assembly="RevitNodes.dll" function="Revit.Elements.Coordinates.BasePoint" />
+    <PythonNodeModels.PythonNode guid="b165472c-9b34-4b32-b814-90caf69cb4e5" type="PythonNodeModels.PythonNode" nickname="Rotate Elements" x="982.976151883491" y="807.570383276629" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="False" IsFrozen="false" isPinned="false" inputcount="2">
+      <PortInfo index="0" default="False" />
+      <PortInfo index="1" default="False" />
+      <Script>#Rotates visible detail items in view
+
+import clr
+import math
+
+clr.AddReference("RevitNodes")
+import Revit
+clr.ImportExtensions(Revit.Elements)
+
+clr.AddReference('RevitAPI')
+import Autodesk
+from Autodesk.Revit.DB import *
+
+clr.AddReference('RevitServices')
+from RevitServices.Persistence import DocumentManager
+from RevitServices.Transactions import TransactionManager
+
+#get current document
+doc = DocumentManager.Instance.CurrentDBDocument
+#get current view
+view = Document.ActiveView
+#get elements in view to rotate
+dtlComponent = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_DetailComponents).WhereElementIsNotElementType().ToElements()
+#get input angle
+angle = math.radians(IN[0])
+#base point for rotation
+bPoint = UnwrapElement(IN[1])
+#1 create XYZ at base point
+p1 = XYZ(bPoint.X,bPoint.Y,bPoint.Z)
+#2 create XYZ above base point to generate line
+p2 = XYZ(p1.X,p1.Y,p1.Z+1)
+#3 generate line for axis
+axis = Line.CreateBound(p1,p2)
+# list to store moved elements
+movedElements = []
+
+#Start Revit Transaction to add to undo list
+TransactionManager.Instance.EnsureInTransaction(doc)
+
+#loop through elements to rotate and add to movedElements array for futher modification in Dynamo
+for d in dtlComponent:
+    Autodesk.Revit.DB.ElementTransformUtils.RotateElement(doc,d.Id,axis,angle)
+    movedElements.append(d)
+
+#Close Revit Transation
+TransactionManager.Instance.TransactionTaskDone()
+
+OUT = movedElements
+</Script>
+    </PythonNodeModels.PythonNode>
+    <CoreNodeModels.Watch guid="f782dc92-5869-47c3-969a-f7be09396eae" type="CoreNodeModels.Watch" nickname="Watch" x="1137.37864833964" y="795.491944283952" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="False" IsFrozen="false" isPinned="false">
+      <PortInfo index="0" default="False" />
+    </CoreNodeModels.Watch>
+    <Dynamo.Graph.Nodes.CodeBlockNodeModel guid="2ea569c3-ec49-4604-8306-79864827a09a" type="Dynamo.Graph.Nodes.CodeBlockNodeModel" nickname="Angle of Rotation" x="787.775835026487" y="786.993935040396" isVisible="true" isUpstreamVisible="true" lacing="Disabled" isSelectedInput="False" IsFrozen="false" isPinned="false" CodeText="1.3;" ShouldFocus="false" />
+  </Elements>
+  <Connectors>
+    <Dynamo.Graph.Connectors.ConnectorModel start="1dcb3028-63b6-4edc-9a89-5dbbc3e00452" start_index="0" end="b165472c-9b34-4b32-b814-90caf69cb4e5" end_index="1" portType="0" />
+    <Dynamo.Graph.Connectors.ConnectorModel start="b165472c-9b34-4b32-b814-90caf69cb4e5" start_index="0" end="f782dc92-5869-47c3-969a-f7be09396eae" end_index="0" portType="0" />
+    <Dynamo.Graph.Connectors.ConnectorModel start="2ea569c3-ec49-4604-8306-79864827a09a" start_index="0" end="b165472c-9b34-4b32-b814-90caf69cb4e5" end_index="0" portType="0" />
+  </Connectors>
+  <Notes />
+  <Annotations />
+  <Presets />
+  <Cameras>
+    <Camera Name="Background Preview" eyeX="-17" eyeY="24" eyeZ="50" lookX="12" lookY="-13" lookZ="-58" upX="0" upY="1" upZ="0" />
+  </Cameras>
+</Workspace>
